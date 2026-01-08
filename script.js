@@ -294,14 +294,19 @@ class TodoApp {
         const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 2) return false;
         
-        // 첫 번째 줄이 | 로 시작하고 끝나는지 확인
-        const firstLine = lines[0].trim();
-        if (!firstLine.startsWith('|') || !firstLine.endsWith('|')) return false;
+        // | 문자가 포함된 줄이 2개 이상인지 확인
+        const pipeLines = lines.filter(line => line.includes('|'));
+        if (pipeLines.length < 2) return false;
         
-        // 구분선이 있는지 확인 (| --- | --- | 형태)
+        // 첫 번째 파이프 라인이 | 로 시작하거나 끝나는지 확인
+        const firstPipeLine = pipeLines[0].trim();
+        if (!firstPipeLine.includes('|')) return false;
+        
+        // 구분선이 있는지 확인 (| --- | 또는 |---| 또는 | :--- | 형태)
         const hasSeperator = lines.some(line => {
             const trimmed = line.trim();
-            return trimmed.includes('---') && trimmed.includes('|');
+            // ---가 포함되고 |도 포함된 줄
+            return (trimmed.includes('---') || trimmed.includes(':--')) && trimmed.includes('|');
         });
         
         return hasSeperator;
