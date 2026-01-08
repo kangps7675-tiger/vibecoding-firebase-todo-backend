@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>할일 앱</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📝 할일 앱</h1>
+        
+        <div class="input-group">
+            <input 
+                type="text" 
+                id="todoInput" 
+                class="todo-input" 
+                placeholder="할일을 입력하세요..."
+            >
+            <button id="addBtn" class="add-btn">추가</button>
+        </div>
+
+        <ul id="todoList" class="todo-list"></ul>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>
