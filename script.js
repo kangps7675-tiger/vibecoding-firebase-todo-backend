@@ -56,12 +56,23 @@ class TodoApp {
             }, 0);
         });
 
-        // 미리보기 클릭 이벤트 설정
-        this.tablePreview.addEventListener('click', () => {
+        // 미리보기 클릭 이벤트 설정 (더블클릭으로 편집 모드)
+        this.tablePreview.addEventListener('dblclick', () => {
             this.tablePreview.style.display = 'none';
             this.todoInput.style.display = 'block';
             this.todoInput.focus();
         });
+
+        // 미리보기 상태에서 Enter 키로 추가
+        this.tablePreview.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.addTodo();
+            }
+        });
+
+        // 미리보기에 포커스 가능하도록 설정
+        this.tablePreview.setAttribute('tabindex', '0');
 
         // 실시간 데이터 리스너 설정
         this.setupRealtimeListener();
@@ -72,9 +83,11 @@ class TodoApp {
         const text = this.todoInput.value.trim();
         
         if (this.isMarkdownTable(text) || this.isTabTable(text)) {
-            this.tablePreview.innerHTML = this.formatText(text);
+            this.tablePreview.innerHTML = this.formatText(text) + 
+                '<div class="preview-hint">Enter: 추가 | 더블클릭: 편집</div>';
             this.tablePreview.style.display = 'block';
             this.todoInput.style.display = 'none';
+            this.tablePreview.focus();
         } else {
             this.tablePreview.style.display = 'none';
             this.todoInput.style.display = 'block';
