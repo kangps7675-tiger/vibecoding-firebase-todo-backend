@@ -291,37 +291,55 @@ class TodoApp {
         return div.innerHTML;
     }
 
-    // 탭으로 구분된 텍스트인지 확인
+    // 탭으로 구분된 텍스트인지 확인 (엑셀 복사 등)
     isTabTable(text) {
         const lines = text.split('\n').filter(line => line.trim());
-        if (lines.length < 1) return false;
+        // 최소 2줄 이상 (헤더 + 데이터)
+        if (lines.length < 2) return false;
         
-        const hasTab = lines.some(line => line.includes('\t'));
-        if (!hasTab) return false;
+        // 모든 줄에 탭이 있어야 함
+        const allHaveTab = lines.every(line => line.includes('\t'));
+        if (!allHaveTab) return false;
         
+        // 첫 번째 줄의 열 개수
         const firstLineCols = lines[0].split('\t').length;
-        return firstLineCols >= 2;
+        // 최소 2개 이상의 열이 있어야 함
+        if (firstLineCols < 2) return false;
+        
+        // 모든 줄의 열 개수가 동일해야 함 (표 형태)
+        const allSameCols = lines.every(line => line.split('\t').length === firstLineCols);
+        
+        return allSameCols;
     }
 
     // 마크다운 표 형식인지 확인 (구분선 필수: | --- | 또는 | :-- |)
     isMarkdownTable(text) {
         const lines = text.split('\n').filter(line => line.trim());
-        if (lines.length < 2) return false;
+        // 최소 3줄 이상 (헤더 + 구분선 + 데이터)
+        if (lines.length < 3) return false;
         
-        // 구분선이 있는지 확인 (| --- | 또는 |---| 또는 | :--- | 형태)
-        const hasSeperator = lines.some(line => {
+        // 구분선 찾기 (| --- | 또는 |---| 또는 | :--- | 형태)
+        const separatorIndex = lines.findIndex(line => {
             const trimmed = line.trim();
-            // ---가 포함되고 |도 포함된 줄 (구분선)
-            return (trimmed.includes('---') || trimmed.includes(':--')) && trimmed.includes('|');
+            // |로 시작하고 ---나 :--가 포함된 줄
+            if (!trimmed.startsWith('|')) return false;
+            // --- 또는 :-- 패턴이 있어야 함
+            return /\|[\s]*:?-{3,}/.test(trimmed);
         });
         
-        if (!hasSeperator) return false;
+        if (separatorIndex === -1) return false;
         
-        // 구분선 외에 | 가 포함된 데이터 줄이 있는지 확인
-        const dataLines = lines.filter(line => {
+        // 구분선 위에 헤더가 있어야 함
+        if (separatorIndex === 0) return false;
+        
+        // 헤더 줄이 | 로 시작하고 끝나야 함
+        const headerLine = lines[separatorIndex - 1].trim();
+        if (!headerLine.startsWith('|') || !headerLine.endsWith('|')) return false;
+        
+        // 구분선 아래에 데이터가 있어야 함
+        const dataLines = lines.slice(separatorIndex + 1).filter(line => {
             const trimmed = line.trim();
-            const isSeparator = (trimmed.includes('---') || trimmed.includes(':--')) && trimmed.includes('|');
-            return trimmed.includes('|') && !isSeparator;
+            return trimmed.startsWith('|') && trimmed.endsWith('|');
         });
         
         return dataLines.length >= 1;
