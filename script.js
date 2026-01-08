@@ -289,27 +289,28 @@ class TodoApp {
         return firstLineCols >= 2;
     }
 
-    // 마크다운 표 형식인지 확인 (| 분류 | 재료 | 비고 |)
+    // 마크다운 표 형식인지 확인 (구분선 필수: | --- | 또는 | :-- |)
     isMarkdownTable(text) {
         const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 2) return false;
         
-        // | 문자가 포함된 줄이 2개 이상인지 확인
-        const pipeLines = lines.filter(line => line.includes('|'));
-        if (pipeLines.length < 2) return false;
-        
-        // 첫 번째 파이프 라인이 | 로 시작하거나 끝나는지 확인
-        const firstPipeLine = pipeLines[0].trim();
-        if (!firstPipeLine.includes('|')) return false;
-        
         // 구분선이 있는지 확인 (| --- | 또는 |---| 또는 | :--- | 형태)
         const hasSeperator = lines.some(line => {
             const trimmed = line.trim();
-            // ---가 포함되고 |도 포함된 줄
+            // ---가 포함되고 |도 포함된 줄 (구분선)
             return (trimmed.includes('---') || trimmed.includes(':--')) && trimmed.includes('|');
         });
         
-        return hasSeperator;
+        if (!hasSeperator) return false;
+        
+        // 구분선 외에 | 가 포함된 데이터 줄이 있는지 확인
+        const dataLines = lines.filter(line => {
+            const trimmed = line.trim();
+            const isSeparator = (trimmed.includes('---') || trimmed.includes(':--')) && trimmed.includes('|');
+            return trimmed.includes('|') && !isSeparator;
+        });
+        
+        return dataLines.length >= 1;
     }
 
     // 탭으로 구분된 텍스트를 HTML 테이블로 변환
