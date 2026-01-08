@@ -63,11 +63,25 @@ class TodoApp {
             this.todoInput.focus();
         });
 
-        // 미리보기 상태에서 Enter 키로 추가
+        // 미리보기 상태에서 키보드 이벤트 처리
         this.tablePreview.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.addTodo();
+            } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key.length === 1) {
+                // 백스페이스, Delete, 또는 일반 문자 입력 시 편집 모드로 전환
+                this.tablePreview.style.display = 'none';
+                this.todoInput.style.display = 'block';
+                this.todoInput.focus();
+                // 백스페이스인 경우 마지막 문자 삭제
+                if (e.key === 'Backspace') {
+                    this.todoInput.value = this.todoInput.value.slice(0, -1);
+                    e.preventDefault();
+                } else if (e.key === 'Delete') {
+                    // Delete 키는 그냥 편집 모드로 전환만
+                    e.preventDefault();
+                }
+                // 일반 문자는 자동으로 입력됨
             }
         });
 
@@ -371,6 +385,11 @@ class TodoApp {
         return html;
     }
 
+    // **굵은글씨** 마크다운 처리
+    formatBold(text) {
+        return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+
     // 텍스트를 포맷팅 (테이블 또는 일반 텍스트)
     formatText(text) {
         if (this.isMarkdownTable(text)) {
@@ -379,7 +398,10 @@ class TodoApp {
         if (this.isTabTable(text)) {
             return this.convertTabToTable(text);
         }
-        return this.escapeHtml(text).replace(/\n/g, '<br>');
+        // 일반 텍스트도 **굵은글씨** 처리
+        let formatted = this.escapeHtml(text).replace(/\n/g, '<br>');
+        formatted = this.formatBold(formatted);
+        return formatted;
     }
 }
 
