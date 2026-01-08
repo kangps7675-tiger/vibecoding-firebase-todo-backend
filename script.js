@@ -146,35 +146,46 @@ class TodoApp {
             li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
 
             if (this.editingId === todo.id) {
+                li.className = 'todo-item editing';
                 li.innerHTML = `
                     <div class="edit-form">
-                        <input 
-                            type="text" 
+                        <textarea 
                             class="edit-input" 
-                            value="${todo.text}" 
                             id="editInput"
                             autofocus
-                        >
-                        <button class="save-btn">저장</button>
-                        <button class="cancel-btn">취소</button>
+                        >${todo.text}</textarea>
+                        <div class="edit-buttons">
+                            <button class="save-btn">저장</button>
+                            <button class="cancel-btn">취소</button>
+                        </div>
                     </div>
                 `;
 
                 const saveBtn = li.querySelector('.save-btn');
                 const cancelBtn = li.querySelector('.cancel-btn');
-                const input = li.querySelector('#editInput');
+                const textarea = li.querySelector('#editInput');
+
+                // textarea 높이 자동 조절
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+
+                textarea.addEventListener('input', () => {
+                    textarea.style.height = 'auto';
+                    textarea.style.height = textarea.scrollHeight + 'px';
+                });
 
                 saveBtn.addEventListener('click', () => {
-                    this.saveTodo(todo.id, input.value);
+                    this.saveTodo(todo.id, textarea.value);
                 });
 
                 cancelBtn.addEventListener('click', () => {
                     this.cancelEdit();
                 });
 
-                input.addEventListener('keypress', (e) => {
-                    if (e.key === 'Enter') {
-                        this.saveTodo(todo.id, input.value);
+                textarea.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        this.saveTodo(todo.id, textarea.value);
                     }
                 });
             } else {
