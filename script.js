@@ -32,8 +32,17 @@ class TodoApp {
         this.todosRef = ref(db, 'todos');
 
         this.addBtn.addEventListener('click', () => this.addTodo());
-        this.todoInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.addTodo();
+        this.todoInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.addTodo();
+            }
+        });
+        
+        // textarea 자동 높이 조절
+        this.todoInput.addEventListener('input', () => {
+            this.todoInput.style.height = 'auto';
+            this.todoInput.style.height = this.todoInput.scrollHeight + 'px';
         });
 
         // 실시간 데이터 리스너 설정
@@ -71,6 +80,7 @@ class TodoApp {
         });
 
         this.todoInput.value = '';
+        this.todoInput.style.height = 'auto';
     }
 
     deleteTodo(id) {
@@ -174,7 +184,7 @@ class TodoApp {
                         class="todo-checkbox"
                         ${todo.completed ? 'checked' : ''}
                     >
-                    <span class="todo-text">${this.escapeHtml(todo.text)}</span>
+                    <span class="todo-text">${this.escapeHtml(todo.text).replace(/\n/g, '<br>')}</span>
                     <div class="todo-actions">
                         <button class="edit-btn">수정</button>
                         <button class="delete-btn">삭제</button>
