@@ -26,7 +26,6 @@ class TodoApp {
         this.todoInput = document.getElementById('todoInput');
         this.addBtn = document.getElementById('addBtn');
         this.todoList = document.getElementById('todoList');
-        this.tablePreview = document.getElementById('tablePreview');
         this.editingId = null;
 
         // Firebase Realtime Database 참조
@@ -40,74 +39,15 @@ class TodoApp {
             }
         });
         
-        // textarea 자동 높이 조절 및 미리보기 업데이트
+        // textarea 자동 높이 조절
         this.todoInput.addEventListener('input', () => {
             this.todoInput.style.height = 'auto';
             this.todoInput.style.height = this.todoInput.scrollHeight + 'px';
-            this.updatePreview();
         });
-
-        // 붙여넣기 이벤트 처리
-        this.todoInput.addEventListener('paste', () => {
-            setTimeout(() => {
-                this.todoInput.style.height = 'auto';
-                this.todoInput.style.height = this.todoInput.scrollHeight + 'px';
-                this.updatePreview();
-            }, 0);
-        });
-
-        // 미리보기 클릭 이벤트 설정 (더블클릭으로 편집 모드)
-        this.tablePreview.addEventListener('dblclick', () => {
-            this.tablePreview.style.display = 'none';
-            this.todoInput.style.display = 'block';
-            this.todoInput.focus();
-        });
-
-        // 미리보기 상태에서 키보드 이벤트 처리
-        this.tablePreview.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                this.addTodo();
-            } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key.length === 1) {
-                // 백스페이스, Delete, 또는 일반 문자 입력 시 편집 모드로 전환
-                this.tablePreview.style.display = 'none';
-                this.todoInput.style.display = 'block';
-                this.todoInput.focus();
-                // 백스페이스인 경우 마지막 문자 삭제
-                if (e.key === 'Backspace') {
-                    this.todoInput.value = this.todoInput.value.slice(0, -1);
-                    e.preventDefault();
-                } else if (e.key === 'Delete') {
-                    // Delete 키는 그냥 편집 모드로 전환만
-                    e.preventDefault();
-                }
-                // 일반 문자는 자동으로 입력됨
-            }
-        });
-
-        // 미리보기에 포커스 가능하도록 설정
-        this.tablePreview.setAttribute('tabindex', '0');
 
         // 실시간 데이터 리스너 설정
         this.setupRealtimeListener();
     }
-
-    // 입력창 미리보기 업데이트
-    updatePreview() {
-        const text = this.todoInput.value.trim();
-        
-        if (this.isMarkdownTable(text) || this.isTabTable(text)) {
-            this.tablePreview.innerHTML = this.formatText(text) + 
-                '<div class="preview-hint">Enter: 추가 | 더블클릭: 편집</div>';
-            this.tablePreview.style.display = 'block';
-            this.todoInput.style.display = 'none';
-            this.tablePreview.focus();
-        } else {
-            this.tablePreview.style.display = 'none';
-            this.todoInput.style.display = 'block';
-        }
-    }
-
 
     setupRealtimeListener() {
         onValue(this.todosRef, (snapshot) => {
@@ -141,8 +81,6 @@ class TodoApp {
 
         this.todoInput.value = '';
         this.todoInput.style.height = 'auto';
-        this.tablePreview.style.display = 'none';
-        this.todoInput.style.display = 'block';
     }
 
     deleteTodo(id) {
@@ -257,7 +195,7 @@ class TodoApp {
                         class="todo-checkbox"
                         ${todo.completed ? 'checked' : ''}
                     >
-                    <span class="todo-text">${this.formatText(todo.text)}</span>
+                    <span class="todo-text">${this.escapeHtml(todo.text).replace(/\n/g, '<br>')}</span>
                     <div class="todo-actions">
                         <button class="edit-btn">수정</button>
                         <button class="delete-btn">삭제</button>
@@ -289,137 +227,6 @@ class TodoApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
-    }
-
-    // 탭으로 구분된 텍스트인지 확인 (엑셀 복사 등)
-    isTabTable(text) {
-        const lines = text.split('\n').filter(line => line.trim());
-        // 최소 2줄 이상 (헤더 + 데이터)
-        if (lines.length < 2) return false;
-        
-        // 모든 줄에 탭이 있어야 함
-        const allHaveTab = lines.every(line => line.includes('\t'));
-        if (!allHaveTab) return false;
-        
-        // 첫 번째 줄의 열 개수
-        const firstLineCols = lines[0].split('\t').length;
-        // 최소 2개 이상의 열이 있어야 함
-        if (firstLineCols < 2) return false;
-        
-        // 모든 줄의 열 개수가 동일해야 함 (표 형태)
-        const allSameCols = lines.every(line => line.split('\t').length === firstLineCols);
-        
-        return allSameCols;
-    }
-
-    // 마크다운 표 형식인지 확인 (구분선 필수: | --- | 또는 | :-- |)
-    isMarkdownTable(text) {
-        const lines = text.split('\n').filter(line => line.trim());
-        // 최소 3줄 이상 (헤더 + 구분선 + 데이터)
-        if (lines.length < 3) return false;
-        
-        // 구분선 찾기 (| --- | 또는 |---| 또는 | :--- | 형태)
-        const separatorIndex = lines.findIndex(line => {
-            const trimmed = line.trim();
-            // |로 시작하고 ---나 :--가 포함된 줄
-            if (!trimmed.startsWith('|')) return false;
-            // --- 또는 :-- 패턴이 있어야 함
-            return /\|[\s]*:?-{3,}/.test(trimmed);
-        });
-        
-        if (separatorIndex === -1) return false;
-        
-        // 구분선 위에 헤더가 있어야 함
-        if (separatorIndex === 0) return false;
-        
-        // 헤더 줄이 | 로 시작하고 끝나야 함
-        const headerLine = lines[separatorIndex - 1].trim();
-        if (!headerLine.startsWith('|') || !headerLine.endsWith('|')) return false;
-        
-        // 구분선 아래에 데이터가 있어야 함
-        const dataLines = lines.slice(separatorIndex + 1).filter(line => {
-            const trimmed = line.trim();
-            return trimmed.startsWith('|') && trimmed.endsWith('|');
-        });
-        
-        return dataLines.length >= 1;
-    }
-
-    // 탭으로 구분된 텍스트를 HTML 테이블로 변환
-    convertTabToTable(text) {
-        const lines = text.split('\n').filter(line => line.trim());
-        let html = '<table class="todo-table">';
-        
-        lines.forEach((line, index) => {
-            const cells = line.split('\t');
-            html += '<tr>';
-            cells.forEach(cell => {
-                const tag = index === 0 ? 'th' : 'td';
-                html += `<${tag}>${this.escapeHtml(cell.trim())}</${tag}>`;
-            });
-            html += '</tr>';
-        });
-        
-        html += '</table>';
-        return html;
-    }
-
-    // 마크다운 표를 HTML 테이블로 변환
-    convertMarkdownToTable(text) {
-        const lines = text.split('\n').filter(line => line.trim());
-        let html = '<table class="todo-table">';
-        let isHeader = true;
-        
-        lines.forEach((line) => {
-            const trimmed = line.trim();
-            
-            // 구분선 (| --- | --- |) 건너뛰기
-            if (trimmed.includes('---') && trimmed.includes('|')) {
-                isHeader = false;
-                return;
-            }
-            
-            // | 로 분리하고 앞뒤 빈 요소 제거
-            let cells = trimmed.split('|');
-            cells = cells.filter((cell, index) => {
-                // 첫 번째와 마지막 빈 요소 제거
-                if (index === 0 && cell.trim() === '') return false;
-                if (index === cells.length - 1 && cell.trim() === '') return false;
-                return true;
-            });
-            
-            html += '<tr>';
-            cells.forEach(cell => {
-                const tag = isHeader ? 'th' : 'td';
-                // **굵은글씨** 처리
-                let cellText = this.escapeHtml(cell.trim());
-                cellText = cellText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-                html += `<${tag}>${cellText}</${tag}>`;
-            });
-            html += '</tr>';
-        });
-        
-        html += '</table>';
-        return html;
-    }
-
-    // **굵은글씨** 마크다운 처리
-    formatBold(text) {
-        return text.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    }
-
-    // 텍스트를 포맷팅 (테이블 또는 일반 텍스트)
-    formatText(text) {
-        if (this.isMarkdownTable(text)) {
-            return this.convertMarkdownToTable(text);
-        }
-        if (this.isTabTable(text)) {
-            return this.convertTabToTable(text);
-        }
-        // 일반 텍스트도 **굵은글씨** 처리
-        let formatted = this.escapeHtml(text).replace(/\n/g, '<br>');
-        formatted = this.formatBold(formatted);
-        return formatted;
     }
 }
 

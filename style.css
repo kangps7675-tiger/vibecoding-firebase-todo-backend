@@ -30,44 +30,10 @@ h1 {
     font-size: 28px;
 }
 
-.input-section {
-    margin-bottom: 25px;
-}
-
 .input-group {
     display: flex;
     gap: 10px;
-}
-
-.table-preview {
-    margin-top: 10px;
-    padding: 15px;
-    background: #f0f4ff;
-    border: 2px solid #667eea;
-    border-radius: 8px;
-    cursor: pointer;
-    position: relative;
-}
-
-.table-preview:focus {
-    outline: 2px solid #667eea;
-    outline-offset: 2px;
-}
-
-.preview-hint {
-    margin-top: 10px;
-    text-align: center;
-    font-size: 12px;
-    color: #667eea;
-    opacity: 0.8;
-}
-
-.table-preview:hover {
-    background: #e8edff;
-}
-
-.table-preview .todo-table {
-    margin: 0;
+    margin-bottom: 25px;
 }
 
 .todo-input {
@@ -239,41 +205,4 @@ h1 {
 
 .cancel-btn:hover {
     background: #777;
-}
-
-/* 테이블 스타일 */
-.todo-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin: 5px 0;
-    font-size: 14px;
-}
-
-.todo-table th,
-.todo-table td {
-    border: 1px solid #ddd;
-    padding: 8px 10px;
-    text-align: left;
-}
-
-.todo-table th {
-    background: #667eea;
-    color: white;
-    font-weight: bold;
-}
-
-.todo-table tr:nth-child(even) {
-    background: #f8f8f8;
-}
-
-.todo-table tr:hover {
-    background: #e8e8ff;
-}
-
-.todo-item.completed .todo-table th {
-    background: #999;
-}
-
-.todo-item.completed .todo-table td {
-    color: #999;
 }
