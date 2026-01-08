@@ -26,6 +26,7 @@ class TodoApp {
         this.todoInput = document.getElementById('todoInput');
         this.addBtn = document.getElementById('addBtn');
         this.todoList = document.getElementById('todoList');
+        this.tablePreview = document.getElementById('tablePreview');
         this.editingId = null;
 
         // Firebase Realtime Database 참조
@@ -39,15 +40,47 @@ class TodoApp {
             }
         });
         
-        // textarea 자동 높이 조절
+        // textarea 자동 높이 조절 및 미리보기 업데이트
         this.todoInput.addEventListener('input', () => {
             this.todoInput.style.height = 'auto';
             this.todoInput.style.height = this.todoInput.scrollHeight + 'px';
+            this.updatePreview();
+        });
+
+        // 붙여넣기 이벤트 처리
+        this.todoInput.addEventListener('paste', () => {
+            setTimeout(() => {
+                this.todoInput.style.height = 'auto';
+                this.todoInput.style.height = this.todoInput.scrollHeight + 'px';
+                this.updatePreview();
+            }, 0);
+        });
+
+        // 미리보기 클릭 이벤트 설정
+        this.tablePreview.addEventListener('click', () => {
+            this.tablePreview.style.display = 'none';
+            this.todoInput.style.display = 'block';
+            this.todoInput.focus();
         });
 
         // 실시간 데이터 리스너 설정
         this.setupRealtimeListener();
     }
+
+    // 입력창 미리보기 업데이트
+    updatePreview() {
+        const text = this.todoInput.value.trim();
+        
+        if (this.isMarkdownTable(text) || this.isTabTable(text)) {
+            this.tablePreview.innerHTML = this.formatText(text);
+            this.tablePreview.style.display = 'block';
+            this.todoInput.style.display = 'none';
+        } else {
+            this.tablePreview.style.display = 'none';
+            this.todoInput.style.display = 'block';
+        }
+    }
+
 
     setupRealtimeListener() {
         onValue(this.todosRef, (snapshot) => {
@@ -81,6 +114,8 @@ class TodoApp {
 
         this.todoInput.value = '';
         this.todoInput.style.height = 'auto';
+        this.tablePreview.style.display = 'none';
+        this.todoInput.style.display = 'block';
     }
 
     deleteTodo(id) {
