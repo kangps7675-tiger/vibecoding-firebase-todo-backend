@@ -229,22 +229,38 @@ class TodoApp {
         return div.innerHTML;
     }
 
-    // 탭으로 구분된 텍스트를 테이블인지 확인
-    isTableData(text) {
+    // 탭으로 구분된 텍스트인지 확인
+    isTabTable(text) {
         const lines = text.split('\n').filter(line => line.trim());
         if (lines.length < 1) return false;
         
-        // 각 줄에 탭이 있는지 확인
         const hasTab = lines.some(line => line.includes('\t'));
         if (!hasTab) return false;
         
-        // 최소 2개 이상의 열이 있어야 함
         const firstLineCols = lines[0].split('\t').length;
         return firstLineCols >= 2;
     }
 
+    // 마크다운 표 형식인지 확인 (| 분류 | 재료 | 비고 |)
+    isMarkdownTable(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        if (lines.length < 2) return false;
+        
+        // 첫 번째 줄이 | 로 시작하고 끝나는지 확인
+        const firstLine = lines[0].trim();
+        if (!firstLine.startsWith('|') || !firstLine.endsWith('|')) return false;
+        
+        // 구분선이 있는지 확인 (| --- | --- | 형태)
+        const hasSeperator = lines.some(line => {
+            const trimmed = line.trim();
+            return trimmed.includes('---') && trimmed.includes('|');
+        });
+        
+        return hasSeperator;
+    }
+
     // 탭으로 구분된 텍스트를 HTML 테이블로 변환
-    convertToTable(text) {
+    convertTabToTable(text) {
         const lines = text.split('\n').filter(line => line.trim());
         let html = '<table class="todo-table">';
         
@@ -252,7 +268,6 @@ class TodoApp {
             const cells = line.split('\t');
             html += '<tr>';
             cells.forEach(cell => {
-                // 첫 번째 줄은 헤더로 처리
                 const tag = index === 0 ? 'th' : 'td';
                 html += `<${tag}>${this.escapeHtml(cell.trim())}</${tag}>`;
             });
@@ -263,10 +278,52 @@ class TodoApp {
         return html;
     }
 
+    // 마크다운 표를 HTML 테이블로 변환
+    convertMarkdownToTable(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        let html = '<table class="todo-table">';
+        let isHeader = true;
+        
+        lines.forEach((line) => {
+            const trimmed = line.trim();
+            
+            // 구분선 (| --- | --- |) 건너뛰기
+            if (trimmed.includes('---') && trimmed.includes('|')) {
+                isHeader = false;
+                return;
+            }
+            
+            // | 로 분리하고 앞뒤 빈 요소 제거
+            let cells = trimmed.split('|');
+            cells = cells.filter((cell, index) => {
+                // 첫 번째와 마지막 빈 요소 제거
+                if (index === 0 && cell.trim() === '') return false;
+                if (index === cells.length - 1 && cell.trim() === '') return false;
+                return true;
+            });
+            
+            html += '<tr>';
+            cells.forEach(cell => {
+                const tag = isHeader ? 'th' : 'td';
+                // **굵은글씨** 처리
+                let cellText = this.escapeHtml(cell.trim());
+                cellText = cellText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+                html += `<${tag}>${cellText}</${tag}>`;
+            });
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        return html;
+    }
+
     // 텍스트를 포맷팅 (테이블 또는 일반 텍스트)
     formatText(text) {
-        if (this.isTableData(text)) {
-            return this.convertToTable(text);
+        if (this.isMarkdownTable(text)) {
+            return this.convertMarkdownToTable(text);
+        }
+        if (this.isTabTable(text)) {
+            return this.convertTabToTable(text);
         }
         return this.escapeHtml(text).replace(/\n/g, '<br>');
     }
