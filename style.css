@@ -176,3 +176,40 @@ h1 {
     cursor: pointer;
     font-weight: bold;
 }
+
+/* 테이블 스타일 */
+.todo-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+.todo-table th,
+.todo-table td {
+    border: 1px solid #ddd;
+    padding: 8px 10px;
+    text-align: left;
+}
+
+.todo-table th {
+    background: #667eea;
+    color: white;
+    font-weight: bold;
+}
+
+.todo-table tr:nth-child(even) {
+    background: #f8f8f8;
+}
+
+.todo-table tr:hover {
+    background: #e8e8ff;
+}
+
+.todo-item.completed .todo-table th {
+    background: #999;
+}
+
+.todo-item.completed .todo-table td {
+    color: #999;
+}

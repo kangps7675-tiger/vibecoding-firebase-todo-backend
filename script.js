@@ -184,7 +184,7 @@ class TodoApp {
                         class="todo-checkbox"
                         ${todo.completed ? 'checked' : ''}
                     >
-                    <span class="todo-text">${this.escapeHtml(todo.text).replace(/\n/g, '<br>')}</span>
+                    <span class="todo-text">${this.formatText(todo.text)}</span>
                     <div class="todo-actions">
                         <button class="edit-btn">수정</button>
                         <button class="delete-btn">삭제</button>
@@ -216,6 +216,48 @@ class TodoApp {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    // 탭으로 구분된 텍스트를 테이블인지 확인
+    isTableData(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        if (lines.length < 1) return false;
+        
+        // 각 줄에 탭이 있는지 확인
+        const hasTab = lines.some(line => line.includes('\t'));
+        if (!hasTab) return false;
+        
+        // 최소 2개 이상의 열이 있어야 함
+        const firstLineCols = lines[0].split('\t').length;
+        return firstLineCols >= 2;
+    }
+
+    // 탭으로 구분된 텍스트를 HTML 테이블로 변환
+    convertToTable(text) {
+        const lines = text.split('\n').filter(line => line.trim());
+        let html = '<table class="todo-table">';
+        
+        lines.forEach((line, index) => {
+            const cells = line.split('\t');
+            html += '<tr>';
+            cells.forEach(cell => {
+                // 첫 번째 줄은 헤더로 처리
+                const tag = index === 0 ? 'th' : 'td';
+                html += `<${tag}>${this.escapeHtml(cell.trim())}</${tag}>`;
+            });
+            html += '</tr>';
+        });
+        
+        html += '</table>';
+        return html;
+    }
+
+    // 텍스트를 포맷팅 (테이블 또는 일반 텍스트)
+    formatText(text) {
+        if (this.isTableData(text)) {
+            return this.convertToTable(text);
+        }
+        return this.escapeHtml(text).replace(/\n/g, '<br>');
     }
 }
 
